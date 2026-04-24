@@ -2,6 +2,11 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://fkwjyxgdbpqwqnppbnpx.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrd2p5eGdkYnBxd3FucHBibnB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MTU3OTAsImV4cCI6MjA5MTk5MTc5MH0.WgMFOddWYaGSLn8TBqnyddv2axaNQc10gU_kh9b2vzA';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function LoveWeb() {
   const [mounted, setMounted] = useState(false);
@@ -10,12 +15,8 @@ export default function LoveWeb() {
   const [noCount, setNoCount] = useState(0);
   const [isSadMode, setIsSadMode] = useState(false);
   const [message, setMessage] = useState("");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ป้องกัน Hydration Mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   const allGifs = {
     step1: ["https://i.pinimg.com/originals/81/cc/9c/81cc9c076500537651ad13faca97bd27.gif", "https://i.pinimg.com/originals/c5/b2/cd/c5b2cdbe3815555653dacafacb035dfe.gif", "https://i.pinimg.com/originals/90/cb/21/90cb21bfd4893d10a9bc8ec1b5ad6f5f.gif", "https://i.pinimg.com/originals/11/05/8f/11058f4928ba391a7094a18c84117a93.gif", "https://i.pinimg.com/originals/18/51/af/1851afe54522535e45a9eb6cda70aff6.gif", "https://i.pinimg.com/originals/a4/8d/ea/a48dea33d985ba9ecea56ac2039afc9a.gif", "https://i.pinimg.com/originals/73/e3/5c/73e35c36f411496e1be8e92cedb25eed.gif", "https://i.pinimg.com/originals/61/7b/ba/617bba855a4c334a4c8991958a0ad41a.gif", "https://i.pinimg.com/originals/a1/68/3b/a1683b8062cfc88d8cc97d0fc199617e.gif", "https://i.pinimg.com/originals/dc/bd/31/dcbd31a54fe6915de2130c288ce0781b.gif", "https://i.pinimg.com/originals/af/6d/08/af6d084b10eff6fb06aba742592e832e.gif"],
@@ -44,6 +45,21 @@ export default function LoveWeb() {
     }
   };
 
+  // --- ฟังก์ชันส่งข้อมูลเข้า Supabase ---
+  const handleSubmit = async () => {
+    try {
+      if (message.trim() !== "") {
+        await supabase.from('love_messages').insert([{ message: message }]);
+      } else if (mainStep === 4) {
+         await supabase.from('love_messages').insert([{ message: "ตอบว่า มีใจให้ค่ะ ❤️" }]);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+    setMainStep(6);
+    confetti();
+  };
+
   const btnPrimary = "bg-pink-500 text-white px-8 py-2 rounded-full font-bold hover:scale-110 transition-all shadow-md active:scale-95";
   const btnSecondary = "bg-gray-300 text-gray-700 px-8 py-2 rounded-full font-bold hover:scale-105 transition-all shadow-sm active:scale-95";
 
@@ -52,13 +68,8 @@ export default function LoveWeb() {
       <AnimatePresence mode="wait">
         {isSadMode ? (
           <motion.div key="sad" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <img 
-              src={mainStep === 1 ? allGifs.step1[noCount] : mainStep === 2 ? allGifs.step2[noCount] : mainStep === 3 ? allGifs.step3[noCount] : allGifs.step4[noCount]} 
-              className="w-64 mx-auto mb-4 rounded-xl shadow-lg" 
-            />
-            <h2 className="text-2xl font-bold text-red-500">
-              {mainStep === 3 && noCount === 9 ? "ไม่จีบแล้วเป็นแฟนเลยได้ไหม" : "ให้คิดอีกรอบไม่ได้จริงๆ หรอ..."}
-            </h2>
+            <img src={mainStep === 1 ? allGifs.step1[noCount] : mainStep === 2 ? allGifs.step2[noCount] : mainStep === 3 ? allGifs.step3[noCount] : allGifs.step4[noCount]} className="w-64 mx-auto mb-4 rounded-xl shadow-lg" />
+            <h2 className="text-2xl font-bold text-red-500">{mainStep === 3 && noCount === 9 ? "ไม่จีบแล้วเป็นแฟนเลยได้ไหม" : "ให้คิดอีกรอบไม่ได้จริงๆ หรอ..."}</h2>
           </motion.div>
         ) : (
           <div className="w-full max-w-md">
@@ -103,10 +114,10 @@ export default function LoveWeb() {
               </div>
             )}
             {mainStep === 4 && (
-              <motion.div key="d4" initial={{ scale: 0.9 }} animate={{ scale: 1 }}><img src={allGifs.step4[noCount]} className="w-56 mx-auto mb-6 rounded-2xl shadow-xl" /><h1 className="text-2xl font-bold text-pink-600 mb-8 leading-tight">{noCount === 0 ? "หน้าสุดท้ายแล้ว จะมีใจให้เราได้บ้างยัง" : noCount < 9 ? "ให้ตอบใหม่เถอะนะ..." : "เป็นแฟนเลยได้ไหม ิิ"}</h1><div className="flex gap-4 justify-center"><button onClick={() => {setMainStep(6); confetti();}} className={btnPrimary + " px-10"}>มี</button><button onClick={() => handleNo(10, 6)} className={btnSecondary}>ไม่</button></div></motion.div>
+              <motion.div key="d4" initial={{ scale: 0.9 }} animate={{ scale: 1 }}><img src={allGifs.step4[noCount]} className="w-56 mx-auto mb-6 rounded-2xl shadow-xl" /><h1 className="text-2xl font-bold text-pink-600 mb-8 leading-tight">{noCount === 0 ? "หน้าสุดท้ายแล้ว จะมีใจให้เราได้บ้างยัง" : noCount < 9 ? "ให้ตอบใหม่เถอะนะ..." : "เป็นแฟนเลยได้ไหม ิิ"}</h1><div className="flex gap-4 justify-center"><button onClick={handleSubmit} className={btnPrimary + " px-10"}>มี</button><button onClick={() => handleNo(10, 6)} className={btnSecondary}>ไม่</button></div></motion.div>
             )}
             {mainStep === 5 && (
-              <motion.div key="s5" className="w-full max-w-md"><img src={allGifs.typing} className="w-32 mx-auto mb-4" /><h1 className="text-xl mb-4 text-pink-600 font-bold leading-tight">พิมพ์วิธีจีบหนูบอกพี่หน่อย...</h1><textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full p-4 border-2 border-pink-300 rounded-2xl text-black focus:outline-none" rows={4} /><button onClick={() => {setMainStep(6); confetti();}} className={btnPrimary + " mt-4 w-full"}>ส่งคำตอบ ❤️</button></motion.div>
+              <motion.div key="s5" className="w-full max-w-md"><img src={allGifs.typing} className="w-32 mx-auto mb-4" /><h1 className="text-xl mb-4 text-pink-600 font-bold leading-tight">พิมพ์วิธีจีบหนูบอกพี่หน่อย...</h1><textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full p-4 border-2 border-pink-300 rounded-2xl text-black focus:outline-none" rows={4} /><button onClick={handleSubmit} className={btnPrimary + " mt-4 w-full"}>ส่งคำตอบ ❤️</button></motion.div>
             )}
             {mainStep === 6 && (
               <motion.div key="s6" initial={{ scale: 0.5 }} animate={{ scale: 1 }}><img src={allGifs.success} className="w-64 mx-auto mb-6 rounded-2xl shadow-2xl border-8 border-white" /><h1 className="text-4xl font-black text-pink-600 mb-4 leading-tight">{message !== "" ? "ได้รับคำตอบแล้วนะ!" : "มีใจหรอ งั้นเป็นแฟนเลยได้ไหม ิิ"}</h1><p className="text-pink-400 text-xl font-medium">ขอบคุณนะครับคนสวย ❤️</p></motion.div>
