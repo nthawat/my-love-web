@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://fkwjyxgdbpqwqnppbnpx.supabase.co';
+const supabaseUrl = 'https://fkwjyxgdbpqwqnppbnpz.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrd2p5eGdkYnBxd3FucHBibnB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MTU3OTAsImV4cCI6MjA5MTk5MTc5MH0.WgMFOddWYaGSLn8TBqnyddv2axaNQc10gU_kh9b2vzA';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
